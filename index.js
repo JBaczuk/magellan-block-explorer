@@ -8,10 +8,11 @@ module.exports = class BlockParser {
 			port: rpcPort,
 			user: rpcUser,
 			pass: rpcPassword,
-			ssl: sslEn 
+			ssl: sslEn
 		})
 	    this.mongodbUrl = mongodbUrl
 		this.dbName = dbName
+        this.debug = debugEn
 	}
 
 	async getBlockHashes (blockCount) {
@@ -48,7 +49,7 @@ module.exports = class BlockParser {
             }
 
             try {
-                if (debugEn) console.debug(`[BlockParser parseVout] saving utxo: ${JSON.stringify(utxoEntry)}`)
+                if (this.debug) console.debug(`[BlockParser parseVout] saving utxo: ${JSON.stringify(utxoEntry)}`)
                 await db.collection('utxo').insertOne(utxoEntry)
             } catch (err) {
                 throw Error('utxo db insert: ' + err)
@@ -62,13 +63,13 @@ module.exports = class BlockParser {
         for (let i = 0; i < hashes.length; i += 1) {
             try {
                 block = await this.bcrpc.getBlock(hashes[i], 2)
-                if (debugEn) console.debug(`[parseTransactions] got block ${hashes[i]}`)
+                if (this.debug) console.debug(`[parseTransactions] got block ${hashes[i]}`)
             } catch (err) {
                 throw Error(`parseTransactions: getBlock failed. ${err}`)
             }
             transactions = block.tx
             for (let j = 0; j < transactions.length; j += 1) {
-                if (debugEn) console.debug('\x1b[36m', `[parseTransactions] tx found: ${JSON.stringify(transactions[j])}`, '\x1b[0m')
+                if (this.debug) console.debug('\x1b[36m', `[parseTransactions] tx found: ${JSON.stringify(transactions[j])}`, '\x1b[0m')
                 // Skip genesis coinbase
                 if (transactions[j].txid === '4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b') continue
                 await this.parseVout(transactions[j], db)
@@ -86,21 +87,21 @@ module.exports = class BlockParser {
         } catch (err) {
             throw Error('[BlockParser parseBlocks] Failed to connect to mongo', err)
         }
-        if (debugEn) console.debug('[BlockParser parseBlocks] Connected successfully to mongo')
+        if (this.debug) console.debug('[BlockParser parseBlocks] Connected successfully to mongo')
         try {
             blockCount = await this.bcrpc.getBlockCount()
         } catch (err) {
             throw Error(`getBlockCount error: ${err}`)
         }
-        if (debugEn) console.debug(`[BlockParser parseBlocks] blockCount: ${blockCount}`)
+        if (this.debug) console.debug(`[BlockParser parseBlocks] blockCount: ${blockCount}`)
         try {
             hashes = await this.getBlockHashes(blockCount)
         } catch (err) {
             throw Error(`getBlockHashes error: ${err}`)
         }
-        if (debugEn) console.debug(`hashes: ${JSON.stringify(hashes)}`)
+        if (this.debug) console.debug(`hashes: ${JSON.stringify(hashes)}`)
         try { 
-            if (debugEn) console.debug(`[BlockParser parseBlocks] Attempting to connect to mongodb named: ${this.dbName}`)
+            if (this.debug) console.debug(`[BlockParser parseBlocks] Attempting to connect to mongodb named: ${this.dbName}`)
             const db = client.db(this.dbName)
             // Check if exists first
             let collection_query_result = await db.command( { 'listCollections': 1, nameOnly: true })
@@ -108,16 +109,16 @@ module.exports = class BlockParser {
             for (let i = 0; i < collections.length; i += 1) {
                 if (collections[i].name === 'utxo') db.dropCollection('utxo')
             }
-            if (debugEn) console.debug(`[BlockParser parseBlocks] Database clean complete: ${this.dbName}`)
+            if (this.debug) console.debug(`[BlockParser parseBlocks] Database clean complete: ${this.dbName}`)
         } catch (err) {
             throw Error(`[parseBlocks] Initialize Database ${err}`)
         }
     
         try {
             const db = client.db(this.dbName)
-            if (debugEn) console.debug(`[BlockParser parseBlocks] Succesfully connected to mongodb: ${this.dbName}`)
+            if (this.debug) console.debug(`[BlockParser parseBlocks] Succesfully connected to mongodb: ${this.dbName}`)
             await this.parseTransactions(hashes, db)
-            if (debugEn) console.debug(`[BlockParser parseBlocks] Transaction parsing complete.`)
+            if (this.debug) console.debug(`[BlockParser parseBlocks] Transaction parsing complete.`)
             client.close()
         } catch (err) {
             throw Error(`[parseBlocks] parseTransactions ${err}`)
