@@ -1,0 +1,28 @@
+{
+  "name": "magellan-block-parser",
+  "version": "1.0.0",
+  "description": "Bitcoin block parser node.js mongodb",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JBaczuk/magellan-block-explorer.git"
+  },
+  "keywords": [
+    "bitcoin",
+    "block",
+    "parser"
+  ],
+  "author": "Jordan Baczuk",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/JBaczuk/magellan-block-explorer/issues"
+  },
+  "homepage": "https://github.com/JBaczuk/magellan-block-explorer#readme",
+  "dependencies": {
+    "mongodb": "^3.1.7",
+    "bcrpc": "git+https://git@github.com/dgarage/bcrpc.git"
+  }
+}
